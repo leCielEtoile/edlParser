@@ -9,8 +9,9 @@
 <body>
   <h1>EDLチャプター編集ツール</h1>
 
-  <!-- エラー表示エリア -->
-  <div id="errorMessage" class="hidden"></div>
+  <button id="toggleDarkMode" class="toggle-dark">🌙 ダークモード切替</button>
+
+  <div id="message" class="hidden"></div>
 
   <h2>ファイルアップロード</h2>
   <input type="file" id="fileInput" accept=".edl"><br><br>
@@ -26,6 +27,7 @@
   <div class="buttons">
     <button id="shiftButton">00:00:00開始に補正</button>
     <button id="downloadButton">編集内容をダウンロード</button>
+    <button id="copyButton">クリップボードにコピー</button>
   </div>
 
   <script src="script.js"></script>

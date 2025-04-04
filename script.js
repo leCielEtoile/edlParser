@@ -1,4 +1,4 @@
-// 共通：EDLテキストをチャプターリストに変換
+// EDLパース共通ロジック
 function parseEDLText(content) {
   const lines = content.split(/\r?\n/);
   const chapters = [];
@@ -28,19 +28,19 @@ function parseEDLText(content) {
   return chapters;
 }
 
-// エラー表示関数
-function showError(message) {
-  const errorDiv = document.getElementById('errorMessage');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block'; // 表示する
+// メッセージ表示
+function showMessage(message, type = 'success') {
+  const messageDiv = document.getElementById('message');
+  messageDiv.textContent = message;
+  messageDiv.className = type;
+  messageDiv.style.display = 'block';
 
-  // 5秒後に自動で非表示にする
   setTimeout(() => {
-    errorDiv.style.display = 'none';
+    messageDiv.style.display = 'none';
   }, 5000);
 }
 
-// ファイル選択
+// ファイルアップロード
 document.getElementById('fileInput').addEventListener('change', function(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -51,30 +51,32 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
     const chapters = parseEDLText(content);
 
     if (chapters.length === 0) {
-      showError("エラー：有効なチャプター情報が見つかりませんでした。ファイルを確認してください。");
+      showMessage("エラー：有効なチャプター情報が見つかりませんでした。", "error");
       document.getElementById('editor').value = "";
     } else {
       document.getElementById('editor').value = chapters.join('\n');
+      showMessage("ファイルを変換しました！");
     }
   };
   reader.readAsText(file);
 });
 
-// コピペテキスト変換
+// コピペ入力変換
 document.getElementById('convertButton').addEventListener('click', function() {
   const content = document.getElementById('pasteInput').value;
   if (!content.trim()) {
-    showError("コピペ入力が空です。");
+    showMessage("コピペ入力が空です。", "error");
     return;
   }
 
   const chapters = parseEDLText(content);
 
   if (chapters.length === 0) {
-    showError("エラー：有効なチャプター情報が見つかりませんでした。コピペ内容を確認してください。");
+    showMessage("エラー：有効なチャプター情報が見つかりませんでした。", "error");
     document.getElementById('editor').value = "";
   } else {
     document.getElementById('editor').value = chapters.join('\n');
+    showMessage("コピペ入力を変換しました！");
   }
 });
 
@@ -104,12 +106,11 @@ document.getElementById('shiftButton').addEventListener('click', function() {
   });
 
   document.getElementById('editor').value = newLines.join('\n');
-
   shifted = !shifted;
   document.getElementById('shiftButton').textContent = shifted ? "補正を元に戻す" : "00:00:00開始に補正";
 });
 
-// ダウンロードボタン
+// ダウンロード
 document.getElementById('downloadButton').addEventListener('click', function() {
   const text = document.getElementById('editor').value;
   const blob = new Blob([text], { type: "text/plain" });
@@ -121,4 +122,37 @@ document.getElementById('downloadButton').addEventListener('click', function() {
   a.click();
 
   URL.revokeObjectURL(url);
+  showMessage("ファイルをダウンロードしました！");
 });
+
+// クリップボードにコピー
+document.getElementById('copyButton').addEventListener('click', function() {
+  const text = document.getElementById('editor').value;
+  if (!text.trim()) {
+    showMessage("コピーする内容が空です。", "error");
+    return;
+  }
+
+  navigator.clipboard.writeText(text).then(() => {
+    showMessage("チャプターをクリップボードにコピーしました！");
+  }).catch(err => {
+    showMessage("コピーに失敗しました：" + err, "error");
+  });
+});
+
+// ダークモード切替
+const toggleButton = document.getElementById('toggleDarkMode');
+toggleButton.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  if (document.body.classList.contains('dark')) {
+    toggleButton.textContent = '☀️ ライトモード切替';
+  } else {
+    toggleButton.textContent = '🌙 ダークモード切替';
+  }
+});
+
+// 最初にOS設定をチェック
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  document.body.classList.add('dark');
+  toggleButton.textContent = '☀️ ライトモード切替';
+}
