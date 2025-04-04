@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDLチャプター編集ツール</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>EDLチャプター編集ツール</h1>
+
+  <!-- エラー表示エリア -->
+  <div id="errorMessage" class="hidden"></div>
+
+  <h2>ファイルアップロード</h2>
+  <input type="file" id="fileInput" accept=".edl"><br><br>
+
+  <h2>または、EDLテキストをここにコピペ</h2>
+  <textarea id="pasteInput" placeholder="ここにEDLファイルの内容を貼り付けてください…" rows="10"></textarea><br><br>
+
+  <button id="convertButton">コピペテキストから変換</button><br><br>
+
+  <h2>チャプター編集</h2>
+  <textarea id="editor" placeholder="ここに変換されたチャプターが表示されます…" rows="20"></textarea><br><br>
+
+  <div class="buttons">
+    <button id="shiftButton">00:00:00開始に補正</button>
+    <button id="downloadButton">編集内容をダウンロード</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
