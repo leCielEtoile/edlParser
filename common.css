@@ -1,0 +1,275 @@
+/* -------------------------------------------------- */
+/* Google Fonts読み込み：きれいなモダンフォントを適用 */
+/* -------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+/* -------------------------------------------------- */
+/* カラーテーマ変数：サイト全体の色を管理 */
+/* -------------------------------------------------- */
+:root {
+  --primary-color: #4f46e5;   /* メインボタンの通常色（青） */
+  --primary-hover: #4338ca;   /* ボタンホバー時の色（濃い青） */
+  --background-color: #f9fafb; /* ページ背景色（明るいグレー） */
+  --text-color: #111827;      /* 標準文字色（ほぼ黒） */
+  --border-color: #e5e7eb;    /* テキストエリアなどの枠線色（薄いグレー） */
+}
+
+/* -------------------------------------------------- */
+/* ページ全体設定 */
+/* -------------------------------------------------- */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  text-align: center;
+  transition: background-color 0.3s, color 0.3s; /* ダークモード時のスムーズな切り替え */
+}
+
+/* -------------------------------------------------- */
+/* クリックできる要素は選択禁止＋カーソルを手の形に */
+/* -------------------------------------------------- */
+h1, h2, label, button, .buttons, .start-button, .toggle-dark {
+  user-select: none;
+  cursor: pointer;
+}
+
+/* テキストエリアや通常テキストは選択可能（カーソルI字型） */
+textarea, input, p, ul, li {
+  user-select: text;
+  cursor: text;
+}
+
+/* -------------------------------------------------- */
+/* 見出し・タイトル設定 */
+/* -------------------------------------------------- */
+h1 {
+  margin-top: 60px;
+  margin-bottom: 30px;
+  font-size: 2.8rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+/* 段落（pタグ）設定 */
+p {
+  font-size: 1.3rem;
+  margin-bottom: 30px;
+}
+
+/* -------------------------------------------------- */
+/* テキストエリア（編集エリア）設定 */
+/* -------------------------------------------------- */
+textarea {
+  width: 100%;
+  max-width: 1000px;
+  padding: 16px;
+  font-family: monospace;
+  font-size: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  resize: vertical;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* ほんのり影 */
+}
+
+/* -------------------------------------------------- */
+/* ボタン（共通）スタイル */
+/* -------------------------------------------------- */
+button, .start-button, .toggle-dark {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+/* ボタンにホバーしたときの動き */
+button:hover, .start-button:hover, .toggle-dark:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-3px); /* ふわっと浮く */
+}
+
+/* ボタンを押したとき */
+button:active, .start-button:active, .toggle-dark:active {
+  transform: translateY(0); /* 押し込む感じ */
+}
+
+/* 複数ボタンを横並びにする */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 60px;
+}
+
+/* -------------------------------------------------- */
+/* メッセージ表示エリア */
+/* -------------------------------------------------- */
+#message {
+  margin: 20px auto;
+  padding: 14px 28px;
+  max-width: 800px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  display: none; /* 初期は非表示 */
+  font-size: 1rem;
+}
+
+/* 成功メッセージ色 */
+.success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+/* エラーメッセージ色 */
+.error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+/* -------------------------------------------------- */
+/* ホームページ専用セクション（使い方） */
+/* -------------------------------------------------- */
+.start-button {
+    margin-bottom: 30px;
+  }
+.how-to {
+  padding: 0px 20px 50px 20px;
+  background: white;
+  width: 100%;
+  max-width: 1000px;
+  transition: background-color 0.3s;
+}
+
+/* 使い方リスト（番号なし） */
+.how-to-list {
+  list-style: none; /* 番号も点も消す */
+  padding: 0;
+}
+
+.how-to-list li {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+/* -------------------------------------------------- */
+/* EDL出力方法セクション */
+/* -------------------------------------------------- */
+.how-to-export {
+  margin-top: 40px;
+  text-align: left;
+  max-width: 800px;
+}
+
+.how-to-export h3 {
+  margin-top: 20px;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.how-to-export ul {
+  list-style: disc inside; /* 通常のリストマーク */
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.how-to-export li {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+/* -------------------------------------------------- */
+/* フッター */
+/* -------------------------------------------------- */
+footer {
+  margin-top: auto;
+  padding: 20px;
+  background: #e5e7eb;
+  width: 100%;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+/* -------------------------------------------------- */
+/* ダークモード設定 */
+/* -------------------------------------------------- */
+body.dark {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+/* ダークモード時のボタン色 */
+body.dark .start-button, body.dark button, body.dark .toggle-dark {
+  background-color: #6366f1;
+}
+
+/* ダークモード時のテキストエリア */
+body.dark textarea {
+  background-color: #374151;
+  color: #f9fafb;
+  border: 1px solid #4b5563;
+}
+
+/* ダークモード時の使い方セクション背景 */
+body.dark .how-to {
+  background: #374151;
+}
+
+/* ダークモード時のフッター背景 */
+body.dark footer {
+  background: #374151;
+}
+
+/* ダークモード時の成功メッセージ色 */
+body.dark #message.success {
+  background-color: #064e3b;
+  color: #d1fae5;
+  border: 1px solid #10b981;
+}
+
+/* ダークモード時のエラーメッセージ色 */
+body.dark #message.error {
+  background-color: #7f1d1d;
+  color: #fecaca;
+  border: 1px solid #f87171;
+}
+
+/* -------------------------------------------------- */
+/* ダークモード切替ボタンの位置固定（右上） */
+/* -------------------------------------------------- */
+.toggle-dark {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+/* -------------------------------------------------- */
+/* レスポンシブ対応（タブレット以下で幅縮小） */
+/* -------------------------------------------------- */
+@media (max-width: 768px) {
+  textarea {
+    width: 95%;
+  }
+  .how-to {
+    padding: 30px 10px;
+  }
+}

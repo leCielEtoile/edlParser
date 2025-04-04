@@ -1,21 +1,44 @@
-// EDLパース共通ロジック
-function parseEDLText(content) {
+// ダークモード切替
+const toggleButton = document.getElementById('toggleDarkMode');
+toggleButton.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  if (document.body.classList.contains('dark')) {
+    toggleButton.textContent = '☀️ ライトモード切替';
+  } else {
+    toggleButton.textContent = '🌙 ダークモード切替';
+  }
+});
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  document.body.classList.add('dark');
+  toggleButton.textContent = '☀️ ライトモード切替';
+}
+
+// EDLの自動モード検出
+function detectMode(content) {
+  if (content.includes("|M:")) {
+    return "davinci";
+  } else if (content.includes("* FROM CLIP NAME:")) {
+    return "premiere";
+  } else {
+    return "davinci";
+  }
+}
+
+// DaVinci用EDL解析
+function parseDaVinciEDL(content) {
   const lines = content.split(/\r?\n/);
   const chapters = [];
   let lastTime = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-
     const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}):\d{2}/);
     if (timeMatch) {
       lastTime = timeMatch[1];
     }
-
     if (lastTime && lines[i + 1]) {
       const nextLine = lines[i + 1];
       const chapterMatch = nextLine.match(/\|M:(.+?)\|D:/);
-
       if (chapterMatch) {
         const chapterName = chapterMatch[1].trim();
         chapters.push(`${lastTime} ${chapterName}`);
@@ -24,7 +47,32 @@ function parseEDLText(content) {
       }
     }
   }
+  return chapters;
+}
 
+// Premiere用EDL解析
+function parsePremiereEDL(content) {
+  const lines = content.split(/\r?\n/);
+  const chapters = [];
+  let lastTime = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}):\d{2}/);
+    if (timeMatch) {
+      lastTime = timeMatch[1];
+    }
+    if (lastTime && lines[i + 1]) {
+      const nextLine = lines[i + 1];
+      const chapterMatch = nextLine.match(/\* FROM CLIP NAME:\s*(.+)/);
+      if (chapterMatch) {
+        const chapterName = chapterMatch[1].trim();
+        chapters.push(`${lastTime} ${chapterName}`);
+        lastTime = null;
+        i++;
+      }
+    }
+  }
   return chapters;
 }
 
@@ -34,28 +82,26 @@ function showMessage(message, type = 'success') {
   messageDiv.textContent = message;
   messageDiv.className = type;
   messageDiv.style.display = 'block';
-
   setTimeout(() => {
     messageDiv.style.display = 'none';
   }, 5000);
 }
 
-// ファイルアップロード
+// ファイル読み込み
 document.getElementById('fileInput').addEventListener('change', function(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = function(e) {
     const content = e.target.result;
-    const chapters = parseEDLText(content);
-
+    const detectedMode = detectMode(content);
+    const chapters = detectedMode === "premiere" ? parsePremiereEDL(content) : parseDaVinciEDL(content);
     if (chapters.length === 0) {
-      showMessage("エラー：有効なチャプター情報が見つかりませんでした。", "error");
+      showMessage("エラー：チャプター情報が見つかりませんでした。", "error");
       document.getElementById('editor').value = "";
     } else {
       document.getElementById('editor').value = chapters.join('\n');
-      showMessage("ファイルを変換しました！");
+      showMessage(`ファイルを変換しました！（自動判別モード: ${detectedMode === "premiere" ? "Premiere" : "DaVinci"}）`);
     }
   };
   reader.readAsText(file);
@@ -68,15 +114,14 @@ document.getElementById('convertButton').addEventListener('click', function() {
     showMessage("コピペ入力が空です。", "error");
     return;
   }
-
-  const chapters = parseEDLText(content);
-
+  const detectedMode = detectMode(content);
+  const chapters = detectedMode === "premiere" ? parsePremiereEDL(content) : parseDaVinciEDL(content);
   if (chapters.length === 0) {
-    showMessage("エラー：有効なチャプター情報が見つかりませんでした。", "error");
+    showMessage("エラー：チャプター情報が見つかりませんでした。", "error");
     document.getElementById('editor').value = "";
   } else {
     document.getElementById('editor').value = chapters.join('\n');
-    showMessage("コピペ入力を変換しました！");
+    showMessage(`コピペ入力を変換しました！（自動判別モード: ${detectedMode === "premiere" ? "Premiere" : "DaVinci"}）`);
   }
 });
 
@@ -88,39 +133,32 @@ document.getElementById('shiftButton').addEventListener('click', function() {
     if (!line.trim()) return line;
     const parts = line.split(' ');
     if (parts.length < 2) return line;
-
     let [h, m, s] = parts[0].split(':').map(Number);
     let total = h * 3600 + m * 60 + s;
-
     if (!shifted) {
       total = Math.max(total - 3600, 0);
     } else {
       total += 3600;
     }
-
     const newH = String(Math.floor(total / 3600)).padStart(2, '0');
     const newM = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
     const newS = String(total % 60).padStart(2, '0');
-
     return `${newH}:${newM}:${newS} ${parts.slice(1).join(' ')}`;
   });
-
   document.getElementById('editor').value = newLines.join('\n');
   shifted = !shifted;
   document.getElementById('shiftButton').textContent = shifted ? "補正を元に戻す" : "00:00:00開始に補正";
 });
 
-// ダウンロード
+// ダウンロードボタン
 document.getElementById('downloadButton').addEventListener('click', function() {
   const text = document.getElementById('editor').value;
   const blob = new Blob([text], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement('a');
   a.href = url;
   a.download = "chapters.txt";
   a.click();
-
   URL.revokeObjectURL(url);
   showMessage("ファイルをダウンロードしました！");
 });
@@ -132,27 +170,9 @@ document.getElementById('copyButton').addEventListener('click', function() {
     showMessage("コピーする内容が空です。", "error");
     return;
   }
-
   navigator.clipboard.writeText(text).then(() => {
     showMessage("チャプターをクリップボードにコピーしました！");
   }).catch(err => {
     showMessage("コピーに失敗しました：" + err, "error");
   });
 });
-
-// ダークモード切替
-const toggleButton = document.getElementById('toggleDarkMode');
-toggleButton.addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  if (document.body.classList.contains('dark')) {
-    toggleButton.textContent = '☀️ ライトモード切替';
-  } else {
-    toggleButton.textContent = '🌙 ダークモード切替';
-  }
-});
-
-// 最初にOS設定をチェック
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  document.body.classList.add('dark');
-  toggleButton.textContent = '☀️ ライトモード切替';
-}

@@ -1,0 +1,129 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f9fafb;
+    color: #111827;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    align-items: center;
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  header {
+    padding: 60px 20px;
+  }
+  
+  h1, h2, label, .start-button, .toggle-dark {
+    user-select: none; /* テキスト選択禁止 */
+    cursor: pointer; /* 手のカーソル */
+  }
+  
+  p, ol, li {
+    user-select: text; /* テキストは選択可能 */
+    cursor: text;
+  }
+  
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+  }
+  
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+  }
+  
+  .start-button {
+    background-color: #4f46e5;
+    color: white;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    transition: background-color 0.3s;
+  }
+  
+  .start-button:hover {
+    background-color: #4338ca;
+  }
+  
+  /* ダークモード時 */
+  body.dark {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+  
+  body.dark .start-button {
+    background-color: #6366f1;
+  }
+  
+  body.dark .start-button:hover {
+    background-color: #4f46e5;
+  }
+  
+  .how-to {
+    padding: 40px 20px;
+    background: white;
+    width: 100%;
+    transition: background-color 0.3s;
+  }
+  
+  body.dark .how-to {
+    background: #374151;
+  }
+  
+  .how-to h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+  
+  .how-to ol {
+    list-style: decimal inside;
+    text-align: left;
+    max-width: 600px;
+    margin: 0 auto;
+    font-size: 1.2rem;
+  }
+  
+  footer {
+    margin-top: auto;
+    padding: 20px;
+    background: #e5e7eb;
+    width: 100%;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+  }
+  
+  body.dark footer {
+    background: #374151;
+  }
+  
+  /* ダークモード切替ボタン */
+  .toggle-dark {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #4f46e5; /* 青背景追加！ */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    z-index: 10;
+  }
+  
+  body.dark .toggle-dark {
+    border-color: #4b5563;
+  }
+  
+  @media (max-width: 600px) {
+    .toggle-dark {
+      font-size: 0.9rem;
+      padding: 6px 12px;
+    }
+  }
+  

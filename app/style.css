@@ -8,7 +8,6 @@
   --border-color: #e5e7eb;
 }
 
-/* ベース設定（ライトモード） */
 body {
   margin: 0;
   padding: 0;
@@ -20,6 +19,16 @@ body {
   align-items: center;
   min-height: 100vh;
   transition: background-color 0.3s, color 0.3s;
+}
+
+h1, h2, label, button, .buttons, .toggle-dark {
+  user-select: none; /* テキスト選択禁止 */
+  cursor: pointer; /* 手のカーソル */
+}
+
+textarea, input, p {
+  user-select: text; /* テキスト入力は選択OK */
+  cursor: text;
 }
 
 h1 {
@@ -137,10 +146,25 @@ body.dark #message.error {
 
 /* ダークモード切替ボタン */
 .toggle-dark {
-  margin-bottom: 20px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
   background: none;
-  border: 1px solid var(--border-color);
+  border: 1px solid #d1d5db;
   padding: 8px 16px;
   border-radius: 8px;
-  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+  z-index: 10;
+}
+
+body.dark .toggle-dark {
+  border-color: #4b5563;
+}
+
+@media (max-width: 600px) {
+  .toggle-dark {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+  }
 }
