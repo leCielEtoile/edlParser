@@ -3,32 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EDLチャプター編集ツール</title>
-  <link rel="stylesheet" href="../common.css">
+  <title>YouTubeチャプター変換ツール</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="PremierePro・DaVinci Resolveのマーカーをユーチューブチャプター形式に変換するツール">
 </head>
 <body>
-  <h1>EDLチャプター編集ツール</h1>
+  <header>
+    <h1>YouTubeチャプター変換ツール</h1>
+    <button id="toggleDarkMode" class="toggle-dark" aria-label="ダークモード切替">🌙 ダークモード切替</button>
+  </header>
 
-  <button id="toggleDarkMode" class="toggle-dark">🌙 ダークモード切替</button>
+  <main>
+    <div id="message" class="hidden"></div>
 
-  <div id="message" class="hidden"></div>
+    <section class="upload-section">
+      <h2>ファイルアップロード</h2>
+      <input type="file" id="fileInput" accept=".edl,.txt,.csv" aria-label="マーカーファイルをアップロード">
+      <p class="format-info">対応形式: DaVinci EDL, Premiere EDL, マーカーテキスト, マーカーCSV</p>
+    </section>
 
-  <h2>ファイルアップロード</h2>
-  <input type="file" id="fileInput" accept=".edl"><br><br>
+    <section class="paste-section">
+      <h2>または、マーカーテキストをここにコピペ</h2>
+      <textarea id="pasteInput" placeholder="ここにマーカーリストの内容を貼り付けてください…" rows="10" aria-label="マーカーテキストを貼り付け"></textarea>
+      <button id="convertButton" class="primary-button">コピペテキストから変換</button>
+    </section>
 
-  <h2>または、EDLテキストをここにコピペ</h2>
-  <textarea id="pasteInput" placeholder="ここにEDLファイルの内容を貼り付けてください…" rows="10"></textarea><br><br>
-
-  <button id="convertButton">コピペテキストから変換</button><br><br>
-
-  <h2>チャプター編集</h2>
-  <textarea id="editor" placeholder="ここに変換されたチャプターが表示されます…" rows="20"></textarea><br><br>
+    <section class="editor-section">
+      <h2>YouTubeチャプター編集</h2>
+      <textarea id="editor" placeholder="ここに変換されたチャプターが表示されます…" rows="20" aria-label="チャプター編集"></textarea>
 
   <div class="buttons">
-    <button id="shiftButton">00:00:00開始に補正</button>
-    <button id="downloadButton">編集内容をダウンロード</button>
-    <button id="copyButton">クリップボードにコピー</button>
+        <button id="shiftButton" class="action-button">00:00:00開始に補正</button>
+        <button id="formatButton" class="action-button">フォーマット整形</button>
+        <button id="downloadButton" class="action-button">ダウンロード</button>
+        <button id="copyButton" class="action-button">クリップボードにコピー</button>
   </div>
+    </section>
+    
+    <section class="help-section">
+      <details>
+        <summary>使い方ガイド</summary>
+        <div class="help-content">
+          <p>1. <strong>マーカーファイルをアップロード</strong>するか、<strong>マーカーテキストを貼り付け</strong>て「コピペテキストから変換」をクリックします。</p>
+          <p>2. 変換されたチャプターテキストが表示されます。必要に応じて<strong>00:00:00開始に補正</strong>をクリックして時間を調整できます。</p>
+          <p>3. 編集が完了したら<strong>ダウンロード</strong>または<strong>クリップボードにコピー</strong>をクリックします。</p>
+          <p>4. コピーしたテキストをYouTubeの動画説明欄に貼り付けると、チャプターが有効になります。</p>
+          <h3>対応ファイル形式</h3>
+          <ul>
+            <li>DaVinci Resolve EDL（マーカー付き）</li>
+            <li>Premiere Pro EDL（マーカー付き）</li>
+            <li>Premiere Pro マーカーテキスト（.txt書き出し）</li>
+            <li>Premiere Pro マーカーCSV（.csv書き出し）</li>
+          </ul>
+          <h3>YouTubeチャプター形式について</h3>
+          <p>YouTubeのチャプター機能を使うには、動画説明欄に<strong>00:00:00 チャプター名</strong>の形式でタイムスタンプとチャプタータイトルを記述します。</p>
+          <p>例:<br>
+          00:00:00 イントロダクション<br>
+          00:01:30 メインコンテンツ<br>
+          00:05:45 まとめ</p>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 YouTubeチャプター変換ツール</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
