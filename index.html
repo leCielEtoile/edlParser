@@ -3,54 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EDLチャプターエディタ</title>
+  <title>YouTubeチャプター変換ツール</title>
+  <meta name="description" content="PremierePro・DaVinci Resolveのマーカーをユーチューブチャプター形式に変換するツール">
   <link rel="stylesheet" href="common.css">
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <h1>EDLチャプターエディタ</h1>
+  <h1>YouTubeチャプター変換ツール</h1>
 
-  <a href="/app/" class="start-button">ツールを使う</a>
-  <button id="toggleDarkMode" class="toggle-dark">🌙 ダークモード切替</button>
+  <a href="/app/" class="start-button"><i class="fas fa-play"></i> ツールを使う</a>
+  
+  <div class="header-controls">
+    <button id="toggleDarkMode" class="toggle-dark" aria-label="ダークモード切替" title="ダークモード切替">
+      <i class="fas fa-moon"></i>
+    </button>
+  </div>
 
   <section class="how-to">
     <h2>使い方</h2>
     <ul class="how-to-list">
-      <li>まずはEDLファイルをアップロードするか、テキストをコピペします。</li>
-      <li>ファイルを読み込むだけで、DaVinci用かPremiere用かを自動で判別します。</li>
-      <li>抽出されたチャプター情報を自由に編集できます。</li>
-      <li>編集が終わったら、保存するかクリップボードにコピーして完了です。</li>
+      <li>EDLファイルをアップロードするか、マーカーテキストをコピペします</li>
+      <li>ファイルを読み込むと、DaVinci用かPremiere用かを自動で判別します</li>
+      <li>変換されたYouTubeチャプター形式のテキストを自由に編集できます</li>
+      <li>編集が終わったら、ダウンロードするかクリップボードにコピーしてYouTube説明欄に貼り付けます</li>
     </ul>
 
-    <h2>EDLファイルの出力方法</h2>
+    <h2>対応ファイル形式</h2>
     <div class="how-to-export">
-      <h3>DaVinci Resolveの場合</h3>
+      <h3>DaVinci Resolve</h3>
       <ul>
-        <li>タイムラインを右クリックして、「タイムライン」＞「書き出し」＞「タイムラインマーカーからEDL」を選択します。</li>
-        <li>適切な保存先を選んでEDLファイルを保存します。</li>
+        <li>タイムラインを右クリックして、「タイムライン」＞「書き出し」＞「タイムラインマーカーからEDL」を選択します</li>
+        <li>適切な保存先を選んでEDLファイルを保存します</li>
       </ul>
 
-      <h3>Premiere Proの場合</h3>
+      <h3>Premiere Pro</h3>
       <ul>
-        <li>タイムラインパネルでシーケンスを選択します。</li>
-        <li>メニューから「ファイル」→「書き出し」→「EDL」を選びます。</li>
-        <li>書き出し設定の「クリップマーカーを含める」を選択し、EDLファイルを保存します。</li>
+        <li>EDL形式: タイムラインを選択し、「ファイル」→「書き出し」→「EDL」を選び、「クリップマーカーを含める」を選択</li>
+        <li>マーカーテキスト: マーカーパネルで「書き出し」を選択し、テキストファイル(*.txt)形式で保存</li>
+        <li>マーカーCSV: マーカーパネルで「書き出し」を選択し、カンマ区切り値(*.csv)形式で保存</li>
       </ul>
     </div>
   </section>
 
   <footer>
-    <p>&copy; 2025 EDL Chapter Editor Project</p>
+    <p>&copy; 2025 YouTubeチャプター変換ツール</p>
   </footer>
 
   <script>
     const toggleButton = document.getElementById('toggleDarkMode');
     toggleButton.addEventListener('click', () => {
       document.body.classList.toggle('dark');
-      toggleButton.textContent = document.body.classList.contains('dark') ? '☀️ ライトモード切替' : '🌙 ダークモード切替';
+      toggleButton.innerHTML = document.body.classList.contains('dark') ? 
+        '<i class="fas fa-sun"></i>' : 
+        '<i class="fas fa-moon"></i>';
     });
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       document.body.classList.add('dark');
-      toggleButton.textContent = '☀️ ライトモード切替';
+      toggleButton.innerHTML = '<i class="fas fa-sun"></i>';
     }
   </script>
 </body>

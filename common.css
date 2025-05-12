@@ -1,48 +1,129 @@
 /* -------------------------------------------------- */
-/* Google Fonts読み込み：きれいなモダンフォントを適用 */
+/* 共通スタイル：両ページで使用する基本設定 */
 /* -------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* -------------------------------------------------- */
 /* カラーテーマ変数：サイト全体の色を管理 */
 /* -------------------------------------------------- */
 :root {
-  --primary-color: #4f46e5;   /* メインボタンの通常色（青） */
-  --primary-hover: #4338ca;   /* ボタンホバー時の色（濃い青） */
-  --background-color: #f9fafb; /* ページ背景色（明るいグレー） */
-  --text-color: #111827;      /* 標準文字色（ほぼ黒） */
-  --border-color: #e5e7eb;    /* テキストエリアなどの枠線色（薄いグレー） */
+  /* カラーパレット - モダンなデザイン */
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: rgba(79, 70, 229, 0.1);
+  --secondary-color: #06b6d4;
+  --secondary-hover: #0891b2;
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --success-color: #10b981;
+  --success-hover: #059669;
+  --background-color: #f9fafb;
+  --card-background: #ffffff;
+  --text-color: #111827;
+  --text-secondary: #4b5563;
+  --border-color: #e5e7eb;
+  --border-color-focus: #a5b4fc;
+  --success-bg: #d1fae5;
+  --success-text: #065f46;
+  --success-border: #6ee7b7;
+  --error-bg: #fee2e2;
+  --error-text: #b91c1c;
+  --error-border: #fca5a5;
+  --ui-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --modal-backdrop: rgba(0, 0, 0, 0.5);
+  
+  /* スペーシング */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* トランジション */
+  --transition-normal: 0.3s ease;
+  --transition-fast: 0.2s ease;
+  --transition-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  /* ボーダーラディウス */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
 }
 
-/* -------------------------------------------------- */
-/* ページ全体設定 */
-/* -------------------------------------------------- */
+/* ダークモード変数 */
+.dark {
+  --primary-color: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-light: rgba(99, 102, 241, 0.2);
+  --secondary-color: #22d3ee;
+  --secondary-hover: #67e8f9;
+  --background-color: #111827;
+  --card-background: #1f2937;
+  --text-color: #f9fafb;
+  --text-secondary: #d1d5db;
+  --border-color: #374151;
+  --border-color-focus: #6366f1;
+  --success-bg: #064e3b;
+  --success-text: #d1fae5;
+  --success-border: #10b981;
+  --error-bg: #7f1d1d;
+  --error-text: #fecaca;
+  --error-border: #f87171;
+  --ui-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* リセットとベース */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  text-align: center;
-  transition: background-color 0.3s, color 0.3s; /* ダークモード時のスムーズな切り替え */
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+  line-height: 1.5;
 }
 
 /* -------------------------------------------------- */
 /* クリックできる要素は選択禁止＋カーソルを手の形に */
 /* -------------------------------------------------- */
-h1, h2, label, button, .buttons, .start-button, .toggle-dark {
+h1, h2, label, button, .buttons, .start-button, .toggle-dark, summary {
   user-select: none;
+  -webkit-user-select: none;
   cursor: pointer;
 }
 
 /* テキストエリアや通常テキストは選択可能（カーソルI字型） */
-textarea, input, p, ul, li {
+textarea, input, p:not(.drop-text), ul, li {
   user-select: text;
+  -webkit-user-select: text;
   cursor: text;
+}
+
+/* 一般テキストのカーソル設定 */
+p:not(.drop-text), .help-content, .modal-body, footer {
+  cursor: default;
+}
+
+/* リンクに適切なカーソル */
+a, .highlight {
+  cursor: pointer;
 }
 
 /* -------------------------------------------------- */
@@ -51,36 +132,40 @@ textarea, input, p, ul, li {
 h1 {
   margin-top: 60px;
   margin-bottom: 30px;
-  font-size: 2.8rem;
+  font-size: 2.5rem;
   font-weight: 700;
+  text-align: center;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
 }
 
 h2 {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 600;
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-/* 段落（pタグ）設定 */
-p {
-  font-size: 1.3rem;
-  margin-bottom: 30px;
+h2::before {
+  content: "";
+  width: 4px;
+  height: 1em;
+  background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+  border-radius: var(--radius-full);
+  display: inline-block;
 }
 
-/* -------------------------------------------------- */
-/* テキストエリア（編集エリア）設定 */
-/* -------------------------------------------------- */
-textarea {
-  width: 100%;
-  max-width: 1000px;
-  padding: 16px;
-  font-family: monospace;
-  font-size: 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: #fff;
-  resize: vertical;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* ほんのり影 */
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
 }
 
 /* -------------------------------------------------- */
@@ -89,110 +174,86 @@ textarea {
 button, .start-button, .toggle-dark {
   background-color: var(--primary-color);
   color: white;
-  padding: 14px 28px;
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
-  border-radius: 8px;
-  font-size: 1.2rem;
-  font-weight: 600;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--ui-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
   text-decoration: none;
-  transition: background-color 0.3s, transform 0.2s;
 }
 
-/* ボタンにホバーしたときの動き */
 button:hover, .start-button:hover, .toggle-dark:hover {
   background-color: var(--primary-hover);
-  transform: translateY(-3px); /* ふわっと浮く */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* ボタンを押したとき */
 button:active, .start-button:active, .toggle-dark:active {
-  transform: translateY(0); /* 押し込む感じ */
+  transform: translateY(0);
+  box-shadow: var(--ui-shadow);
 }
 
-/* 複数ボタンを横並びにする */
-.buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 60px;
+button:focus, .start-button:focus, .toggle-dark:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+button i {
+  font-size: 0.9em;
+}
+
+.primary-button {
+  background-color: var(--primary-color);
+}
+
+.primary-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.secondary-button {
+  background-color: var(--secondary-color);
+}
+
+.secondary-button:hover {
+  background-color: var(--secondary-hover);
 }
 
 /* -------------------------------------------------- */
 /* メッセージ表示エリア */
 /* -------------------------------------------------- */
 #message {
-  margin: 20px auto;
-  padding: 14px 28px;
-  max-width: 800px;
-  border-radius: 8px;
-  font-weight: 600;
+  margin: var(--spacing-lg) auto;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  max-width: 600px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
   text-align: center;
-  display: none; /* 初期は非表示 */
-  font-size: 1rem;
+  animation: slideDown 0.5s var(--transition-bounce);
+  box-shadow: var(--card-shadow);
 }
 
-/* 成功メッセージ色 */
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .success {
-  background-color: #d1fae5;
-  color: #065f46;
-  border: 1px solid #6ee7b7;
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
 }
 
-/* エラーメッセージ色 */
 .error {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #fca5a5;
-}
-
-/* -------------------------------------------------- */
-/* ホームページ専用セクション（使い方） */
-/* -------------------------------------------------- */
-.start-button {
-    margin-bottom: 30px;
-  }
-.how-to {
-  padding: 0px 20px 50px 20px;
-  background: white;
-  width: 100%;
-  max-width: 1000px;
-  transition: background-color 0.3s;
-}
-
-/* 使い方リスト（番号なし） */
-.how-to-list {
-  list-style: none; /* 番号も点も消す */
-  padding: 0;
-}
-
-.how-to-list li {
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-}
-
-/* -------------------------------------------------- */
-/* EDL出力方法セクション */
-/* -------------------------------------------------- */
-.how-to-export {
-  margin-top: 40px;
-  text-align: left;
-}
-
-.how-to-export h3 {
-  margin-top: 20px;
-  font-size: 1.4rem;
-  font-weight: 600;
-}
-
-.how-to-export ul {
-  list-style: disc inside; /* 通常のリストマーク */
-  padding-left: 20px;
-  margin-top: 10px;
-}
-
-.how-to-export li {
-  margin-bottom: 8px;
-  font-size: 1.1rem;
+  background-color: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
 }
 
 /* -------------------------------------------------- */
@@ -200,75 +261,78 @@ button:active, .start-button:active, .toggle-dark:active {
 /* -------------------------------------------------- */
 footer {
   margin-top: auto;
-  padding: 20px;
-  background: #e5e7eb;
+  padding: var(--spacing-lg);
+  background: var(--border-color);
   width: 100%;
-  font-size: 1rem;
-  transition: background-color 0.3s;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-align: center;
+  transition: background-color var(--transition-normal);
 }
 
-/* -------------------------------------------------- */
-/* ダークモード設定 */
-/* -------------------------------------------------- */
-body.dark {
-  background-color: #1f2937;
-  color: #f9fafb;
-}
-
-/* ダークモード時のボタン色 */
-body.dark .start-button, body.dark button, body.dark .toggle-dark {
-  background-color: #6366f1;
-}
-
-/* ダークモード時のテキストエリア */
-body.dark textarea {
-  background-color: #374151;
-  color: #f9fafb;
-  border: 1px solid #4b5563;
-}
-
-/* ダークモード時の使い方セクション背景 */
-body.dark .how-to {
-  background: #374151;
-}
-
-/* ダークモード時のフッター背景 */
 body.dark footer {
   background: #374151;
 }
 
-/* ダークモード時の成功メッセージ色 */
-body.dark #message.success {
-  background-color: #064e3b;
-  color: #d1fae5;
-  border: 1px solid #10b981;
-}
-
-/* ダークモード時のエラーメッセージ色 */
-body.dark #message.error {
-  background-color: #7f1d1d;
-  color: #fecaca;
-  border: 1px solid #f87171;
-}
-
 /* -------------------------------------------------- */
-/* ダークモード切替ボタンの位置固定（右上） */
+/* ヘッダーコントロールボタン (ダークモード・ショートカット等) */
 /* -------------------------------------------------- */
-.toggle-dark {
+.header-controls {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  display: flex;
+  gap: var(--spacing-sm);
   z-index: 10;
 }
 
+.toggle-dark, .info-button {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 0.9rem;
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+  color: var(--text-color);
+}
+
+.toggle-dark:hover, .info-button:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary-color);
+}
+
 /* -------------------------------------------------- */
-/* レスポンシブ対応（タブレット以下で幅縮小） */
+/* レスポンシブ対応（共通） */
 /* -------------------------------------------------- */
 @media (max-width: 768px) {
-  textarea {
-    width: 95%;
+  h1 {
+    font-size: 1.8rem;
   }
-  .how-to {
-    padding: 30px 10px;
+  
+  h2 {
+    font-size: 1.3rem;
   }
+  
+  .toggle-dark {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.8rem;
+  }
+}
+
+/* スクリーンリーダーサポート */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* 非表示要素 */
+.hidden {
+  display: none !important;
 }
