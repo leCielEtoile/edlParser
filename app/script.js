@@ -278,132 +278,85 @@ const YoutubeChapterTool = (() => {
     if (!content) return [];
     
     // BOMを削除
-    content = content.replace(/^\uFEFF/, '');
+    content = content.replace(/^\uFEFF|\uFFFE/, '');
     
-    // 一般的な文字化けを修正（エンコーディングの問題に対応）
-    content = content.replace(/[\u00DE\u00FC\u00AB]/g, '');
+    // エンコーディング問題の対処（CP1252など）
+    content = content.replace(/[\u00DE\u00FC\u00AB\u00FE\u00FF]/g, '');
     
     const lines = content.split(/\r?\n/);
     const chapters = [];
     
-    // ヘッダー行かどうかを判断
-    let startIndex = 0;
-    if (lines[0] && (!lines[0].match(/\d{2}:\d{2}:\d{2}/) || 
-        lines[0].match(/(マーカー|Marker|Name|名前|タイムコード|Timecode)/i))) {
-      startIndex = 1; // ヘッダー行をスキップ
-    }
+    if (lines.length <= 1) return chapters;
     
-    // 時間コードの列インデックスを特定
-    let timeIndex = -1;
-    let nameIndex = -1;
+    // ヘッダー行を処理してカラムのインデックスを特定
+    const headers = lines[0].split(/\t|,/);
     
-    if (startIndex === 1 && lines[0]) {
-      const headers = parseCSVLine(lines[0]);
-      for (let i = 0; i < headers.length; i++) {
-        const header = headers[i].toLowerCase();
-        if (header.includes('time') || header.includes('タイム') || 
-            header.includes('時間') || header.includes('インポイント')) {
-          timeIndex = i;
-        } else if (header.includes('name') || header.includes('名前') || 
-                  header.includes('タイトル') || header.includes('説明') || 
-                  header.includes('コメント')) {
-          nameIndex = i;
-        }
+    let markerNameIndex = -1;
+    let descriptionIndex = -1;
+    let inPointIndex = -1;
+    
+    // 各ヘッダーを検索してインデックスを特定
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i].trim().toLowerCase();
+      
+      if (header.includes('マーカー名') || header.includes('name') || header.includes('名前')) {
+        markerNameIndex = i;
+      } else if (header.includes('説明') || header.includes('コメント') || header.includes('description') || header.includes('comment')) {
+        descriptionIndex = i;
+      } else if (header.includes('イン') || header.includes('インポイント') || header.includes('in') || header.includes('start')) {
+        inPointIndex = i;
       }
     }
     
-    for (let i = startIndex; i < lines.length; i++) {
+    // ヘッダーが見つからない場合はデフォルトインデックスを試用
+    if (inPointIndex === -1) {
+      // 典型的なプレミアプロCSVではインポイントは3列目ことが多い
+      inPointIndex = 2;
+    }
+    
+    // データ行を処理
+    for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // CSVラインを解析
-      const fields = parseCSVLine(line);
+      const fields = line.split(/\t|,/);
+      if (fields.length <= inPointIndex) continue;
       
-      // ヘッダーから列インデックスが特定されている場合
-      if (timeIndex !== -1 && nameIndex !== -1 && fields.length > Math.max(timeIndex, nameIndex)) {
-        const timeStr = fields[timeIndex].trim();
-        const title = fields[nameIndex].trim();
+      // タイムコードを抽出（イン列から）
+      let timeCode = '';
+      if (inPointIndex >= 0 && inPointIndex < fields.length) {
+        const inPoint = fields[inPointIndex].trim();
+        const timeMatch = inPoint.match(/(\d{2}):(\d{2}):(\d{2})(?::(\d{2}))?/);
         
-        const timeMatch = timeStr.match(/(\d{2}:\d{2}:\d{2})(:\d{2})?/);
         if (timeMatch) {
-          chapters.push({
-            time: timeMatch[1],
-            name: title || `マーカー ${chapters.length + 1}`
-          });
+          // HH:MM:SS形式に変換（フレーム部分を除外）
+          timeCode = timeMatch[1] + ':' + timeMatch[2] + ':' + timeMatch[3];
         }
-      } else {
-        // ヘッダーが特定できない場合は全フィールドを検索
-        let foundTime = false;
-        
-        for (let j = 0; j < fields.length; j++) {
-          const field = fields[j].trim();
-          const timeMatch = field.match(/(\d{2}:\d{2}:\d{2})(:\d{2})?/);
-          
-          if (timeMatch) {
-            // 時間の次か前のフィールドをタイトルとして試す
-            let title = '';
-            
-            if (j + 1 < fields.length) {
-              title = fields[j + 1].trim();
-            } else if (j > 0) {
-              title = fields[j - 1].trim();
-            }
-            
-            // タイトルが空またはタイムコードを含む場合はマーカー番号を使用
-            if (!title || title.match(/\d{2}:\d{2}:\d{2}/)) {
-              title = `マーカー ${chapters.length + 1}`;
-            }
-            
-            chapters.push({
-              time: timeMatch[1],
-              name: title
-            });
-            
-            foundTime = true;
-            break;
-          }
-        }
-        
-        // 時間が見つからなかった場合はスキップ
-        if (!foundTime) continue;
       }
+      
+      if (!timeCode) continue;
+      
+      // タイトルを抽出（マーカー名列または説明列から）
+      let title = '';
+      
+      if (markerNameIndex >= 0 && markerNameIndex < fields.length && fields[markerNameIndex].trim()) {
+        title = fields[markerNameIndex].trim();
+      } else if (descriptionIndex >= 0 && descriptionIndex < fields.length && fields[descriptionIndex].trim()) {
+        title = fields[descriptionIndex].trim();
+      }
+      
+      // タイトルが空の場合はデフォルト値を設定
+      if (!title) {
+        title = `マーカー ${chapters.length + 1}`;
+      }
+      
+      chapters.push({
+        time: timeCode,
+        name: title
+      });
     }
     
     return chapters;
-  };
-  
-  // CSVライン解析（引用符に対応）
-  const parseCSVLine = (line) => {
-    const result = [];
-    let inQuotes = false;
-    let currentValue = '';
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      
-      if (char === '"') {
-        if (i + 1 < line.length && line[i + 1] === '"') {
-          // 引用符のエスケープ（""）
-          currentValue += '"';
-          i++;
-        } else {
-          // 引用符の開始または終了
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        // フィールドの区切り
-        result.push(currentValue);
-        currentValue = '';
-      } else {
-        // 通常の文字
-        currentValue += char;
-      }
-    }
-    
-    // 最後のフィールドを追加
-    result.push(currentValue);
-    
-    return result;
   };
 
   // チャプターオブジェクトを文字列に変換
