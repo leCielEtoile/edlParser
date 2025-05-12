@@ -4,22 +4,113 @@
 const YoutubeChapterTool = (() => {
   // DOM要素キャッシュ
   const DOM = {
+    // 基本UI要素
     toggleDarkMode: document.getElementById('toggleDarkMode'),
+    keyboardShortcuts: document.getElementById('keyboardShortcuts'),
     fileInput: document.getElementById('fileInput'),
+    dropArea: document.getElementById('dropArea'),
     pasteInput: document.getElementById('pasteInput'),
+    clearPasteInput: document.getElementById('clearPasteInput'),
     convertButton: document.getElementById('convertButton'),
     editor: document.getElementById('editor'),
+    clearEditor: document.getElementById('clearEditor'),
+    chapterList: document.getElementById('chapterList'),
+    addChapterButton: document.getElementById('addChapterButton'),
     shiftButton: document.getElementById('shiftButton'),
     formatButton: document.getElementById('formatButton'),
     downloadButton: document.getElementById('downloadButton'),
     copyButton: document.getElementById('copyButton'),
-    message: document.getElementById('message')
+    message: document.getElementById('message'),
+    
+    // モーダル
+    shortcutsModal: document.getElementById('shortcutsModal'),
+    addChapterModal: document.getElementById('addChapterModal'),
+    editChapterModal: document.getElementById('editChapterModal'),
+    
+    // モーダル内フォーム要素
+    chapterTime: document.getElementById('chapterTime'),
+    chapterTitle: document.getElementById('chapterTitle'),
+    editChapterTime: document.getElementById('editChapterTime'),
+    editChapterTitle: document.getElementById('editChapterTitle'),
+    editChapterIndex: document.getElementById('editChapterIndex'),
+    saveNewChapter: document.getElementById('saveNewChapter'),
+    updateChapter: document.getElementById('updateChapter')
   };
 
   // 状態管理
   const state = {
     isShifted: false,
-    lastMode: null
+    lastMode: null,
+    editingIndex: -1,
+    chapters: []
+  };
+
+  // ユーティリティ関数
+  
+  // リップルエフェクト
+  const createRipple = (event) => {
+    const button = event.currentTarget;
+    if (!button) return;
+    
+    const ripple = document.createElement('span');
+    const rect = button.getBoundingClientRect();
+    
+    const diameter = Math.max(rect.width, rect.height);
+    const radius = diameter / 2;
+    
+    ripple.style.width = ripple.style.height = `${diameter}px`;
+    ripple.style.left = `${event.clientX - rect.left - radius}px`;
+    ripple.style.top = `${event.clientY - rect.top - radius}px`;
+    ripple.className = 'ripple';
+    
+    // 既存のリップルがあれば削除
+    const existingRipple = button.querySelector('.ripple');
+    if (existingRipple) {
+      existingRipple.remove();
+    }
+    
+    button.appendChild(ripple);
+    
+    // アニメーション終了時に要素を削除
+    setTimeout(() => {
+      ripple.remove();
+    }, 600);
+  };
+  
+  // モーダル表示/非表示
+  const showModal = (modal) => {
+    if (!modal) return;
+    modal.classList.add('active');
+    const firstInput = modal.querySelector('input');
+    if (firstInput) {
+      setTimeout(() => {
+        firstInput.focus();
+      }, 100);
+    }
+    
+    // ESCキーでモーダルを閉じる
+    document.addEventListener('keydown', handleModalEscapeKey);
+    
+    // スクロール防止
+    document.body.style.overflow = 'hidden';
+  };
+  
+  const hideModal = (modal) => {
+    if (!modal) return;
+    modal.classList.remove('active');
+    document.removeEventListener('keydown', handleModalEscapeKey);
+    
+    // スクロール再開
+    document.body.style.overflow = '';
+  };
+  
+  const handleModalEscapeKey = (event) => {
+    if (event.key === 'Escape') {
+      const activeModal = document.querySelector('.modal.active');
+      if (activeModal) {
+        hideModal(activeModal);
+      }
+    }
   };
 
   // ファイル形式の自動検出
@@ -39,9 +130,9 @@ const YoutubeChapterTool = (() => {
     }
     
     // コンテンツに基づく形式検出
-  if (content.includes("|M:")) {
-    return "davinci";
-  } else if (content.includes("* FROM CLIP NAME:")) {
+    if (content.includes("|M:")) {
+      return "davinci";
+    } else if (content.includes("* FROM CLIP NAME:")) {
       return "premiereedl";
     } else if ((content.includes("アセット名") && content.includes("インポイント") && content.includes("説明")) || 
                (content.includes("シーケンス") && /\d{2}:\d{2}:\d{2}:\d{2}/.test(content) && /\t/.test(content))) {
@@ -52,82 +143,82 @@ const YoutubeChapterTool = (() => {
     } else if (/\d{2}:\d{2}:\d{2}(:\d{2})?/.test(content) && /[,\t]/.test(content)) {
       // カンマかタブ区切りでタイムコードを含むファイル
       return content.includes(',') ? "premierecsv" : "premieretxt";
-  } else {
+    } else {
       // 形式が判断できない場合
       return null;
-}
+    }
   };
 
-// DaVinci用EDL解析
+  // DaVinci用EDL解析
   const parseDaVinciEDL = (content) => {
     if (!content) return [];
     
-  const lines = content.split(/\r?\n/);
-  const chapters = [];
-  let lastTime = null;
+    const lines = content.split(/\r?\n/);
+    const chapters = [];
+    let lastTime = null;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}):\d{2}/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}):\d{2}/);
       
-    if (timeMatch) {
-      lastTime = timeMatch[1];
-    }
+      if (timeMatch) {
+        lastTime = timeMatch[1];
+      }
       
       if (lastTime && i + 1 < lines.length) {
-      const nextLine = lines[i + 1];
-      const chapterMatch = nextLine.match(/\|M:(.+?)\|D:/);
+        const nextLine = lines[i + 1];
+        const chapterMatch = nextLine.match(/\|M:(.+?)\|D:/);
         
-      if (chapterMatch) {
-        const chapterName = chapterMatch[1].trim();
+        if (chapterMatch) {
+          const chapterName = chapterMatch[1].trim();
           chapters.push({
             time: lastTime,
             name: chapterName
           });
           
-        lastTime = null;
+          lastTime = null;
           i++; // 次の行をスキップ
         }
       }
     }
     
-  return chapters;
+    return chapters;
   };
 
-// Premiere用EDL解析
+  // Premiere用EDL解析
   const parsePremiereEDL = (content) => {
     if (!content) return [];
     
-  const lines = content.split(/\r?\n/);
-  const chapters = [];
-  let lastTime = null;
+    const lines = content.split(/\r?\n/);
+    const chapters = [];
+    let lastTime = null;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}):\d{2}/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}):\d{2}/);
       
-    if (timeMatch) {
-      lastTime = timeMatch[1];
-    }
+      if (timeMatch) {
+        lastTime = timeMatch[1];
+      }
       
       if (lastTime && i + 1 < lines.length) {
-      const nextLine = lines[i + 1];
-      const chapterMatch = nextLine.match(/\* FROM CLIP NAME:\s*(.+)/);
+        const nextLine = lines[i + 1];
+        const chapterMatch = nextLine.match(/\* FROM CLIP NAME:\s*(.+)/);
         
-      if (chapterMatch) {
-        const chapterName = chapterMatch[1].trim();
+        if (chapterMatch) {
+          const chapterName = chapterMatch[1].trim();
           chapters.push({
             time: lastTime,
             name: chapterName
           });
           
-        lastTime = null;
+          lastTime = null;
           i++; // 次の行をスキップ
         }
       }
     }
     
-  return chapters;
+    return chapters;
   };
 
   // Premiereマーカーテキスト形式（タブ区切り）解析
@@ -429,40 +520,171 @@ const YoutubeChapterTool = (() => {
     return sortChaptersByTime(chapters);
   };
 
-// メッセージ表示
+  // チャプターリスト表示を更新
+  const updateChapterList = () => {
+    // エディタの内容からチャプターリストを更新
+    try {
+      const chapters = stringToChapters(DOM.editor.value);
+      state.chapters = chapters;
+      
+      // チャプターリストをクリア
+      if (!DOM.chapterList) return;
+      
+      DOM.chapterList.innerHTML = '';
+      
+      if (chapters.length === 0) {
+        DOM.chapterList.innerHTML = 
+          `<div class="empty-state">
+            <p>チャプターがありません。ファイルをアップロードするか、新しいチャプターを追加してください。</p>
+          </div>`;
+        return;
+      }
+      
+      // 各チャプターをリストに追加
+      chapters.forEach((chapter, index) => {
+        const chapterItem = document.createElement('div');
+        chapterItem.className = 'chapter-item';
+        chapterItem.dataset.index = index;
+        
+        chapterItem.innerHTML = `
+          <div class="chapter-time">${chapter.time}</div>
+          <div class="chapter-title">${escapeHtml(chapter.name)}</div>
+          <div class="chapter-actions">
+            <button class="icon-button edit-button" aria-label="チャプターを編集" title="編集">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="icon-button delete-button" aria-label="チャプターを削除" title="削除">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        
+        // 編集ボタンのイベントリスナー
+        const editButton = chapterItem.querySelector('.edit-button');
+        if (editButton) {
+          editButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleEditChapter(index);
+            createRipple(e);
+          });
+        }
+        
+        // 削除ボタンのイベントリスナー
+        const deleteButton = chapterItem.querySelector('.delete-button');
+        if (deleteButton) {
+          deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleDeleteChapter(index);
+            createRipple(e);
+          });
+        }
+        
+        // チャプター項目全体のクリックでも編集モーダルを開く
+        chapterItem.addEventListener('click', () => {
+          handleEditChapter(index);
+        });
+        
+        DOM.chapterList.appendChild(chapterItem);
+      });
+    } catch (error) {
+      console.error("チャプターリスト更新エラー:", error);
+    }
+  };
+  
+  // HTMLエスケープ（XSS対策）
+  const escapeHtml = (unsafe) => {
+    if (!unsafe) return '';
+    return String(unsafe)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
+  // メッセージ表示
   const showMessage = (message, type = 'success') => {
+    if (!DOM.message) return;
+    
     DOM.message.textContent = message;
     DOM.message.className = type;
     DOM.message.style.display = 'block';
     
+    // アクセシビリティ対応
+    DOM.message.setAttribute('role', 'alert');
+    
     // 5秒後に消える
-  setTimeout(() => {
+    setTimeout(() => {
       DOM.message.style.display = 'none';
-  }, 5000);
+      DOM.message.removeAttribute('role');
+    }, 5000);
   };
 
+  // イベントハンドラ
+  
+  // ドラッグ＆ドロップ処理
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (DOM.dropArea) DOM.dropArea.classList.add('dragover');
+  };
+  
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (DOM.dropArea) DOM.dropArea.classList.remove('dragover');
+  };
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (DOM.dropArea) DOM.dropArea.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && DOM.fileInput) {
+      DOM.fileInput.files = files;
+      handleFileUpload(); // 自動的にファイル処理を開始
+    }
+  };
+  
+  // ドロップエリアクリック処理
+  const handleDropAreaClick = () => {
+    if (DOM.fileInput) {
+      DOM.fileInput.click();
+    }
+  };
+  
   // ファイル読み込み処理
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = () => {
+    if (!DOM.fileInput) return;
+    
+    const file = DOM.fileInput.files[0];
     if (!file) return;
     
-  const reader = new FileReader();
+    const reader = new FileReader();
+    
+    if (DOM.dropArea) DOM.dropArea.classList.add('processing');
     
     reader.onload = (e) => {
       try {
-    const content = e.target.result;
+        const content = e.target.result;
         const chapters = parseContent(content, file.name);
-        DOM.editor.value = chaptersToString(chapters);
+        if (DOM.editor) DOM.editor.value = chaptersToString(chapters);
+        updateChapterList();
         
         showMessage(`ファイルを変換しました！（形式: ${getFormatDisplayName(state.lastMode)}）`);
       } catch (error) {
         showMessage(`エラー：${error.message}`, "error");
-        DOM.editor.value = "";
+        if (DOM.editor) DOM.editor.value = "";
+        updateChapterList();
+      } finally {
+        if (DOM.dropArea) DOM.dropArea.classList.remove('processing');
       }
     };
     
     reader.onerror = () => {
       showMessage("ファイルの読み込みに失敗しました", "error");
+      if (DOM.dropArea) DOM.dropArea.classList.remove('processing');
     };
     
     reader.readAsText(file);
@@ -470,19 +692,166 @@ const YoutubeChapterTool = (() => {
 
   // コピペテキスト変換処理
   const handleConvertPasted = () => {
+    if (!DOM.pasteInput || !DOM.editor) return;
+    
     const content = DOM.pasteInput.value;
     
     try {
       const chapters = parseContent(content);
       DOM.editor.value = chaptersToString(chapters);
+      updateChapterList();
       
       showMessage(`コピペ入力を変換しました！（形式: ${getFormatDisplayName(state.lastMode)}）`);
     } catch (error) {
       showMessage(`エラー：${error.message}`, "error");
       DOM.editor.value = "";
+      updateChapterList();
     }
   };
-
+  
+  // 入力クリア処理
+  const handleClearPasteInput = () => {
+    if (!DOM.pasteInput) return;
+    DOM.pasteInput.value = '';
+    DOM.pasteInput.focus();
+  };
+  
+  const handleClearEditor = () => {
+    if (!DOM.editor) return;
+    DOM.editor.value = '';
+    updateChapterList();
+    DOM.editor.focus();
+  };
+  
+  // チャプター編集処理
+  const handleAddChapter = () => {
+    // 新規チャプターモーダルを表示
+    if (!DOM.chapterTime || !DOM.chapterTitle || !DOM.addChapterModal) return;
+    
+    DOM.chapterTime.value = '';
+    DOM.chapterTitle.value = '';
+    showModal(DOM.addChapterModal);
+  };
+  
+  const handleSaveNewChapter = () => {
+    if (!DOM.chapterTime || !DOM.chapterTitle || !DOM.editor) return;
+    
+    const time = DOM.chapterTime.value.trim();
+    const title = DOM.chapterTitle.value.trim();
+    
+    if (!time || !title) {
+      showMessage("時間とタイトルを入力してください", "error");
+      return;
+    }
+    
+    // 時間の形式チェック
+    if (!time.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      showMessage("時間は00:00:00の形式で入力してください", "error");
+      return;
+    }
+    
+    // 現在のチャプターを取得
+    const currentChapters = stringToChapters(DOM.editor.value);
+    
+    // 新しいチャプターを追加
+    const newChapter = { time, name: title };
+    const chapters = [...currentChapters, newChapter];
+    
+    // 時間順に並べ替え
+    const sortedChapters = sortChaptersByTime(chapters);
+    
+    // UIとステートを更新
+    DOM.editor.value = chaptersToString(sortedChapters);
+    updateChapterList();
+    
+    // モーダルを閉じる
+    hideModal(DOM.addChapterModal);
+    
+    showMessage("チャプターを追加しました");
+  };
+  
+  const handleEditChapter = (index) => {
+    if (!DOM.editor || !DOM.editChapterTime || !DOM.editChapterTitle || !DOM.editChapterIndex || !DOM.editChapterModal) return;
+    
+    const chapters = stringToChapters(DOM.editor.value);
+    
+    if (index < 0 || index >= chapters.length) return;
+    
+    const chapter = chapters[index];
+    
+    // 編集モーダルに値をセット
+    DOM.editChapterTime.value = chapter.time;
+    DOM.editChapterTitle.value = chapter.name;
+    DOM.editChapterIndex.value = index;
+    
+    // モーダルを表示
+    showModal(DOM.editChapterModal);
+  };
+  
+  const handleUpdateChapter = () => {
+    if (!DOM.editChapterIndex || !DOM.editChapterTime || !DOM.editChapterTitle || !DOM.editor || !DOM.editChapterModal) return;
+    
+    const index = parseInt(DOM.editChapterIndex.value);
+    const time = DOM.editChapterTime.value.trim();
+    const title = DOM.editChapterTitle.value.trim();
+    
+    const chapters = stringToChapters(DOM.editor.value);
+    
+    if (isNaN(index) || index < 0 || index >= chapters.length) {
+      showMessage("エラー：編集対象のチャプターが見つかりません", "error");
+      return;
+    }
+    
+    if (!time || !title) {
+      showMessage("時間とタイトルを入力してください", "error");
+      return;
+    }
+    
+    // 時間の形式チェック
+    if (!time.match(/^\d{2}:\d{2}:\d{2}$/)) {
+      showMessage("時間は00:00:00の形式で入力してください", "error");
+      return;
+    }
+    
+    // チャプターを更新
+    const updatedChapters = [...chapters];
+    updatedChapters[index] = { time, name: title };
+    
+    // 時間順に並べ替え
+    const sortedChapters = sortChaptersByTime(updatedChapters);
+    
+    // UIとステートを更新
+    DOM.editor.value = chaptersToString(sortedChapters);
+    updateChapterList();
+    
+    // モーダルを閉じる
+    hideModal(DOM.editChapterModal);
+    
+    showMessage("チャプターを更新しました");
+  };
+  
+  const handleDeleteChapter = (index) => {
+    if (!DOM.editor) return;
+    
+    const chapters = stringToChapters(DOM.editor.value);
+    
+    if (index < 0 || index >= chapters.length) return;
+    
+    if (!confirm(`チャプター「${chapters[index].time} ${chapters[index].name}」を削除しますか？`)) {
+      return;
+    }
+    
+    // チャプターを削除
+    const updatedChapters = [...chapters];
+    updatedChapters.splice(index, 1);
+    
+    // UIとステートを更新
+    DOM.editor.value = chaptersToString(updatedChapters);
+    updateChapterList();
+    
+    showMessage("チャプターを削除しました");
+  };
+  
   // ファイル形式の表示名を取得
   const getFormatDisplayName = (format) => {
     switch (format) {
@@ -501,19 +870,24 @@ const YoutubeChapterTool = (() => {
 
   // 時間補正処理
   const handleTimeShift = () => {
+    if (!DOM.editor || !DOM.shiftButton) return;
+    
     try {
       const chapters = stringToChapters(DOM.editor.value);
       
       if (chapters.length === 0) {
         showMessage("補正するチャプターがありません", "error");
-    return;
-  }
+        return;
+      }
       
       const shiftedChapters = shiftChapterTimes(chapters, !state.isShifted);
       DOM.editor.value = chaptersToString(shiftedChapters);
+      updateChapterList();
       
       state.isShifted = !state.isShifted;
-      DOM.shiftButton.textContent = state.isShifted ? "補正を元に戻す" : "00:00:00開始に補正";
+      DOM.shiftButton.innerHTML = state.isShifted ? 
+        '<i class="fas fa-clock"></i> 補正を元に戻す' : 
+        '<i class="fas fa-clock"></i> 00:00:00開始に補正';
       
       showMessage(state.isShifted ? "チャプター時間を1時間戻しました" : "チャプター時間を元に戻しました");
     } catch (error) {
@@ -523,16 +897,19 @@ const YoutubeChapterTool = (() => {
 
   // フォーマット整形処理
   const handleFormat = () => {
+    if (!DOM.editor) return;
+    
     try {
       const chapters = stringToChapters(DOM.editor.value);
       
-  if (chapters.length === 0) {
+      if (chapters.length === 0) {
         showMessage("整形するチャプターがありません", "error");
         return;
       }
       
       const formattedChapters = formatChapters(chapters);
       DOM.editor.value = chaptersToString(formattedChapters);
+      updateChapterList();
       
       showMessage("チャプターを整形しました");
     } catch (error) {
@@ -542,6 +919,8 @@ const YoutubeChapterTool = (() => {
 
   // ダウンロード処理
   const handleDownload = () => {
+    if (!DOM.editor) return;
+    
     const text = DOM.editor.value;
     
     if (!text.trim()) {
@@ -549,30 +928,32 @@ const YoutubeChapterTool = (() => {
       return;
     }
     
-  const blob = new Blob([text], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     
-  a.href = url;
+    a.href = url;
     a.download = "youtube-chapters.txt";
-  a.click();
+    a.click();
     
-  URL.revokeObjectURL(url);
+    URL.revokeObjectURL(url);
     showMessage("チャプターファイルをダウンロードしました！");
   };
 
   // クリップボードにコピー処理
   const handleCopy = () => {
+    if (!DOM.editor) return;
+    
     const text = DOM.editor.value;
     
-  if (!text.trim()) {
+    if (!text.trim()) {
       showMessage("コピーする内容が空です", "error");
-    return;
-  }
+      return;
+    }
     
     navigator.clipboard.writeText(text)
       .then(() => {
-    showMessage("チャプターをクリップボードにコピーしました！");
+        showMessage("チャプターをクリップボードにコピーしました！");
       })
       .catch(err => {
         showMessage(`コピーに失敗しました：${err}`, "error");
@@ -583,43 +964,260 @@ const YoutubeChapterTool = (() => {
   const handleDarkModeToggle = () => {
     document.body.classList.toggle('dark');
     
+    if (!DOM.toggleDarkMode) return;
+    
     if (document.body.classList.contains('dark')) {
-      DOM.toggleDarkMode.textContent = '☀️ ライトモード切替';
+      DOM.toggleDarkMode.innerHTML = '<i class="fas fa-sun"></i>';
+      DOM.toggleDarkMode.title = "ライトモード切替";
       localStorage.setItem('darkMode', 'enabled');
     } else {
-      DOM.toggleDarkMode.textContent = '🌙 ダークモード切替';
+      DOM.toggleDarkMode.innerHTML = '<i class="fas fa-moon"></i>';
+      DOM.toggleDarkMode.title = "ダークモード切替";
       localStorage.setItem('darkMode', 'disabled');
+    }
+  };
+  
+  // キーボードショートカット処理
+  const handleKeyboardShortcuts = (event) => {
+    // フォーム要素がフォーカスされている場合はショートカットを無効化
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+      return;
+    }
+    
+    // モーダルが開いている場合はショートカットを無効化
+    if (document.querySelector('.modal.active')) {
+      return;
+    }
+    
+    // Ctrl + S: ダウンロード
+    if (event.ctrlKey && event.key === 's') {
+      event.preventDefault();
+      handleDownload();
+      return;
+    }
+    
+    // Ctrl + C: コピー（編集エリアにフォーカスがない場合のみ）
+    if (event.ctrlKey && event.key === 'c' && document.activeElement !== DOM.editor) {
+      event.preventDefault();
+      handleCopy();
+      return;
+    }
+    
+    // Ctrl + F: フォーマット整形
+    if (event.ctrlKey && event.key === 'f') {
+      event.preventDefault();
+      handleFormat();
+      return;
+    }
+    
+    // Ctrl + T: 時間補正
+    if (event.ctrlKey && event.key === 't') {
+      event.preventDefault();
+      handleTimeShift();
+      return;
+    }
+    
+    // Alt + A: チャプター追加
+    if (event.altKey && event.key === 'a') {
+      event.preventDefault();
+      handleAddChapter();
+      return;
+    }
+    
+    // Alt + D: ダークモード切替
+    if (event.altKey && event.key === 'd') {
+      event.preventDefault();
+      handleDarkModeToggle();
+      return;
+    }
+  };
+  
+  // エディタの内容変更時の処理
+  const handleEditorChange = () => {
+    // エディタの内容が変更されたらチャプターリストを更新
+    updateChapterList();
+  };
+  
+  // モーダル関連のイベントハンドラー
+  const handleShowShortcutsModal = () => {
+    if (DOM.shortcutsModal) {
+      showModal(DOM.shortcutsModal);
+    }
+  };
+  
+  // リップルエフェクト処理
+  const addRippleEffect = (elements) => {
+    if (!elements) return;
+    
+    if (elements instanceof HTMLElement) {
+      elements.addEventListener('click', createRipple);
+    } else if (elements instanceof NodeList || Array.isArray(elements)) {
+      elements.forEach(element => {
+        element.addEventListener('click', createRipple);
+      });
     }
   };
 
   // アプリケーション初期化
   const init = () => {
-    // イベントリスナー設定
-    DOM.toggleDarkMode.addEventListener('click', handleDarkModeToggle);
-    DOM.fileInput.addEventListener('change', handleFileUpload);
-    DOM.convertButton.addEventListener('click', handleConvertPasted);
-    DOM.shiftButton.addEventListener('click', handleTimeShift);
-    DOM.formatButton.addEventListener('click', handleFormat);
-    DOM.downloadButton.addEventListener('click', handleDownload);
-    DOM.copyButton.addEventListener('click', handleCopy);
-    
-    // ダークモード設定の復元
-    if (localStorage.getItem('darkMode') === 'enabled' || 
-        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.body.classList.add('dark');
-      DOM.toggleDarkMode.textContent = '☀️ ライトモード切替';
-    }
-    
-    // メディアクエリの変更を監視
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (e.matches && !localStorage.getItem('darkMode')) {
-        document.body.classList.add('dark');
-        DOM.toggleDarkMode.textContent = '☀️ ライトモード切替';
-      } else if (!e.matches && !localStorage.getItem('darkMode')) {
-        document.body.classList.remove('dark');
-        DOM.toggleDarkMode.textContent = '🌙 ダークモード切替';
+    try {
+      console.log("YouTubeチャプターツール初期化開始");
+      
+      // ドラッグ＆ドロップイベント
+      if (DOM.dropArea) {
+        DOM.dropArea.addEventListener('dragover', handleDragOver);
+        DOM.dropArea.addEventListener('dragleave', handleDragLeave);
+        DOM.dropArea.addEventListener('drop', handleDrop);
+        DOM.dropArea.addEventListener('click', handleDropAreaClick);
+        DOM.dropArea.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            handleDropAreaClick();
+          }
+        });
       }
-    });
+      
+      // ファイル入力
+      if (DOM.fileInput) {
+        DOM.fileInput.addEventListener('change', handleFileUpload);
+      }
+      
+      // テキスト入力と変換
+      if (DOM.clearPasteInput) {
+        DOM.clearPasteInput.addEventListener('click', handleClearPasteInput);
+      }
+      
+      if (DOM.convertButton) {
+        DOM.convertButton.addEventListener('click', handleConvertPasted);
+      }
+      
+      // エディタ操作
+      if (DOM.clearEditor) {
+        DOM.clearEditor.addEventListener('click', handleClearEditor);
+      }
+      
+      if (DOM.editor) {
+        DOM.editor.addEventListener('input', handleEditorChange);
+      }
+      
+      // チャプター操作
+      if (DOM.addChapterButton) {
+        DOM.addChapterButton.addEventListener('click', handleAddChapter);
+      }
+      
+      if (DOM.saveNewChapter) {
+        DOM.saveNewChapter.addEventListener('click', handleSaveNewChapter);
+      }
+      
+      if (DOM.updateChapter) {
+        DOM.updateChapter.addEventListener('click', handleUpdateChapter);
+      }
+      
+      // メイン機能
+      if (DOM.shiftButton) {
+        DOM.shiftButton.addEventListener('click', handleTimeShift);
+      }
+      
+      if (DOM.formatButton) {
+        DOM.formatButton.addEventListener('click', handleFormat);
+      }
+      
+      if (DOM.downloadButton) {
+        DOM.downloadButton.addEventListener('click', handleDownload);
+      }
+      
+      if (DOM.copyButton) {
+        DOM.copyButton.addEventListener('click', handleCopy);
+      }
+      
+      // ダークモードとショートカット
+      if (DOM.toggleDarkMode) {
+        DOM.toggleDarkMode.addEventListener('click', handleDarkModeToggle);
+      }
+      
+      if (DOM.keyboardShortcuts) {
+        DOM.keyboardShortcuts.addEventListener('click', handleShowShortcutsModal);
+      }
+      
+      // キーボードショートカット
+      document.addEventListener('keydown', handleKeyboardShortcuts);
+      
+      // モーダル閉じるボタン
+      document.querySelectorAll('.close-button, .close-modal, .cancel-modal').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const modal = e.target.closest('.modal');
+          if (modal) {
+            hideModal(modal);
+          }
+        });
+      });
+      
+      // モーダル外クリックで閉じる
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            hideModal(modal);
+          }
+        });
+      });
+      
+      // リップルエフェクト追加
+      addRippleEffect(document.querySelectorAll('button:not(.icon-button)'));
+      
+      // ダークモード設定の復元
+      if (localStorage.getItem('darkMode') === 'enabled' || 
+          (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.body.classList.add('dark');
+        if (DOM.toggleDarkMode) {
+          DOM.toggleDarkMode.innerHTML = '<i class="fas fa-sun"></i>';
+          DOM.toggleDarkMode.title = "ライトモード切替";
+        }
+      }
+      
+      // メディアクエリの変更を監視
+      const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      if (darkModeMediaQuery.addEventListener) {
+        darkModeMediaQuery.addEventListener('change', e => {
+          if (e.matches && !localStorage.getItem('darkMode')) {
+            document.body.classList.add('dark');
+            if (DOM.toggleDarkMode) {
+              DOM.toggleDarkMode.innerHTML = '<i class="fas fa-sun"></i>';
+              DOM.toggleDarkMode.title = "ライトモード切替";
+            }
+          } else if (!e.matches && !localStorage.getItem('darkMode')) {
+            document.body.classList.remove('dark');
+            if (DOM.toggleDarkMode) {
+              DOM.toggleDarkMode.innerHTML = '<i class="fas fa-moon"></i>';
+              DOM.toggleDarkMode.title = "ダークモード切替";
+            }
+          }
+        });
+      } else if (darkModeMediaQuery.addListener) {
+        // Safari用のフォールバック
+        darkModeMediaQuery.addListener(e => {
+          if (e.matches && !localStorage.getItem('darkMode')) {
+            document.body.classList.add('dark');
+            if (DOM.toggleDarkMode) {
+              DOM.toggleDarkMode.innerHTML = '<i class="fas fa-sun"></i>';
+              DOM.toggleDarkMode.title = "ライトモード切替";
+            }
+          } else if (!e.matches && !localStorage.getItem('darkMode')) {
+            document.body.classList.remove('dark');
+            if (DOM.toggleDarkMode) {
+              DOM.toggleDarkMode.innerHTML = '<i class="fas fa-moon"></i>';
+              DOM.toggleDarkMode.title = "ダークモード切替";
+            }
+          }
+        });
+      }
+      
+      // 初期状態で空のチャプターリスト表示
+      updateChapterList();
+      
+      console.log("YouTubeチャプターツール初期化完了");
+    } catch (error) {
+      console.error("初期化エラー:", error);
+      showMessage("アプリケーションの初期化に失敗しました", "error");
+    }
   };
 
   // 公開API

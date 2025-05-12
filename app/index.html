@@ -6,11 +6,19 @@
   <title>YouTubeチャプター変換ツール</title>
   <link rel="stylesheet" href="style.css">
   <meta name="description" content="PremierePro・DaVinci Resolveのマーカーをユーチューブチャプター形式に変換するツール">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <header>
     <h1>YouTubeチャプター変換ツール</h1>
-    <button id="toggleDarkMode" class="toggle-dark" aria-label="ダークモード切替">🌙 ダークモード切替</button>
+    <div class="header-controls">
+      <button id="toggleDarkMode" class="toggle-dark" aria-label="ダークモード切替" title="ダークモード切替">
+        <i class="fas fa-moon"></i>
+      </button>
+      <button id="keyboardShortcuts" class="info-button" aria-label="キーボードショートカット" title="キーボードショートカット">
+        <i class="fas fa-keyboard"></i>
+      </button>
+    </div>
   </header>
 
   <main>
@@ -18,25 +26,64 @@
 
     <section class="upload-section">
       <h2>ファイルアップロード</h2>
-      <input type="file" id="fileInput" accept=".edl,.txt,.csv" aria-label="マーカーファイルをアップロード">
+      <div id="dropArea" class="drop-area" tabindex="0" role="button" aria-label="マーカーファイルをドラッグ＆ドロップするか、クリックしてファイルを選択">
+        <i class="fas fa-file-upload"></i>
+        <p class="drop-text">マーカーファイルをドラッグ＆ドロップ<br>または<span class="highlight">クリックして選択</span></p>
+        <input type="file" id="fileInput" accept=".edl,.txt,.csv" aria-label="マーカーファイルをアップロード" class="hidden">
+      </div>
       <p class="format-info">対応形式: DaVinci EDL, Premiere EDL, マーカーテキスト, マーカーCSV</p>
     </section>
 
     <section class="paste-section">
       <h2>または、マーカーテキストをここにコピペ</h2>
+      <div class="input-with-actions">
       <textarea id="pasteInput" placeholder="ここにマーカーリストの内容を貼り付けてください…" rows="10" aria-label="マーカーテキストを貼り付け"></textarea>
-      <button id="convertButton" class="primary-button">コピペテキストから変換</button>
+        <div class="textarea-actions">
+          <button class="icon-button clear-button" id="clearPasteInput" aria-label="入力をクリア" title="入力をクリア">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <button id="convertButton" class="primary-button">
+        <i class="fas fa-exchange-alt"></i> コピペテキストから変換
+      </button>
     </section>
 
     <section class="editor-section">
       <h2>YouTubeチャプター編集</h2>
+      <div class="editor-container">
+        <div id="chapterList" class="chapter-list">
+          <!-- 動的に生成されるチャプターリスト -->
+        </div>
+        <div class="input-with-actions">
       <textarea id="editor" placeholder="ここに変換されたチャプターが表示されます…" rows="20" aria-label="チャプター編集"></textarea>
+          <div class="textarea-actions">
+            <button class="icon-button clear-button" id="clearEditor" aria-label="エディタをクリア" title="エディタをクリア">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="add-chapter">
+        <button id="addChapterButton" class="secondary-button">
+          <i class="fas fa-plus"></i> 新しいチャプターを追加
+        </button>
+      </div>
 
   <div class="buttons">
-        <button id="shiftButton" class="action-button">00:00:00開始に補正</button>
-        <button id="formatButton" class="action-button">フォーマット整形</button>
-        <button id="downloadButton" class="action-button">ダウンロード</button>
-        <button id="copyButton" class="action-button">クリップボードにコピー</button>
+        <button id="shiftButton" class="action-button" title="時間を調整して最初のチャプターを00:00:00にします">
+          <i class="fas fa-clock"></i> 00:00:00開始に補正
+        </button>
+        <button id="formatButton" class="action-button" title="チャプターを時間順に並べ替え、重複を削除します">
+          <i class="fas fa-sort"></i> フォーマット整形
+        </button>
+        <button id="downloadButton" class="action-button" title="チャプターをテキストファイルでダウンロード">
+          <i class="fas fa-download"></i> ダウンロード
+        </button>
+        <button id="copyButton" class="action-button" title="チャプターをクリップボードにコピー">
+          <i class="fas fa-copy"></i> クリップボードにコピー
+        </button>
   </div>
     </section>
     
@@ -61,6 +108,15 @@
           00:00:00 イントロダクション<br>
           00:01:30 メインコンテンツ<br>
           00:05:45 まとめ</p>
+          <h3>キーボードショートカット</h3>
+          <div class="shortcuts-list">
+            <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>S</kbd> <span>チャプターをダウンロード</span></div>
+            <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>C</kbd> <span>チャプターをコピー（編集エリアがフォーカスされてない場合）</span></div>
+            <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>F</kbd> <span>フォーマット整形</span></div>
+            <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>T</kbd> <span>00:00:00開始に補正</span></div>
+            <div class="shortcut"><kbd>Alt</kbd> + <kbd>A</kbd> <span>新しいチャプターを追加</span></div>
+            <div class="shortcut"><kbd>Alt</kbd> + <kbd>D</kbd> <span>ダークモード切替</span></div>
+          </div>
         </div>
       </details>
     </section>
@@ -69,6 +125,78 @@
   <footer>
     <p>© 2025 YouTubeチャプター変換ツール</p>
   </footer>
+
+  <!-- モーダルダイアログ -->
+  <div id="shortcutsModal" class="modal" role="dialog" aria-labelledby="shortcutsModalTitle" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="shortcutsModalTitle">キーボードショートカット</h2>
+        <button class="close-button" aria-label="閉じる"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcuts-list">
+          <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>S</kbd> <span>チャプターをダウンロード</span></div>
+          <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>C</kbd> <span>チャプターをコピー（編集エリアがフォーカスされてない場合）</span></div>
+          <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>F</kbd> <span>フォーマット整形</span></div>
+          <div class="shortcut"><kbd>Ctrl</kbd> + <kbd>T</kbd> <span>00:00:00開始に補正</span></div>
+          <div class="shortcut"><kbd>Alt</kbd> + <kbd>A</kbd> <span>新しいチャプターを追加</span></div>
+          <div class="shortcut"><kbd>Alt</kbd> + <kbd>D</kbd> <span>ダークモード切替</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="primary-button close-modal">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新規チャプター追加モーダル -->
+  <div id="addChapterModal" class="modal" role="dialog" aria-labelledby="addChapterModalTitle" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="addChapterModalTitle">新しいチャプターを追加</h2>
+        <button class="close-button" aria-label="閉じる"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="chapterTime">時間（HH:MM:SS）:</label>
+          <input type="text" id="chapterTime" placeholder="00:00:00" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" required>
+        </div>
+        <div class="form-group">
+          <label for="chapterTitle">チャプタータイトル:</label>
+          <input type="text" id="chapterTitle" placeholder="チャプタータイトルを入力" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-button cancel-modal">キャンセル</button>
+        <button class="primary-button" id="saveNewChapter">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 編集用モーダル -->
+  <div id="editChapterModal" class="modal" role="dialog" aria-labelledby="editChapterModalTitle" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="editChapterModalTitle">チャプターを編集</h2>
+        <button class="close-button" aria-label="閉じる"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="editChapterTime">時間（HH:MM:SS）:</label>
+          <input type="text" id="editChapterTime" placeholder="00:00:00" pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}" required>
+        </div>
+        <div class="form-group">
+          <label for="editChapterTitle">チャプタータイトル:</label>
+          <input type="text" id="editChapterTitle" placeholder="チャプタータイトルを入力" required>
+        </div>
+        <input type="hidden" id="editChapterIndex">
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-button cancel-modal">キャンセル</button>
+        <button class="primary-button" id="updateChapter">更新</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
