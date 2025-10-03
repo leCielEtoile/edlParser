@@ -8,6 +8,18 @@
   <link rel="stylesheet" href="style.css">
   <meta name="description" content="PremierePro・DaVinci Resolveのマーカーをユーチューブチャプター形式に変換するツール">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    // FOUC（Flash of Unstyled Content）防止：ページ読み込み前にダークモード適用
+    (function() {
+      const darkModeEnabled = localStorage.getItem('darkMode') === 'enabled';
+      const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const noPreference = !localStorage.getItem('darkMode');
+
+      if (darkModeEnabled || (systemPrefersDark && noPreference)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 <body>
   <header>
@@ -199,6 +211,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>

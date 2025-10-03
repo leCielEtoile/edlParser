@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像メタデータ削除ツール</title>
+  <meta name="description" content="PNG・JPEG画像からEXIF、XMP、IPTC等のメタデータを完全に削除するツール">
+  <link rel="stylesheet" href="../common.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    // FOUC（Flash of Unstyled Content）防止：ページ読み込み前にダークモード適用
+    (function() {
+      const darkModeEnabled = localStorage.getItem('darkMode') === 'enabled';
+      const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const noPreference = !localStorage.getItem('darkMode');
+
+      if (darkModeEnabled || (systemPrefersDark && noPreference)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <h1>画像メタデータ削除ツール</h1>
+    <div class="header-controls">
+      <a href="/" class="home-button" aria-label="ホームに戻る" title="ホームに戻る">
+        <i class="fas fa-home"></i>
+      </a>
+      <button id="toggleDarkMode" class="toggle-dark" aria-label="ダークモード切替" title="ダークモード切替">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div id="message" class="hidden"></div>
+
+    <section class="upload-section">
+      <h2>画像をアップロード</h2>
+      <div id="dropArea" class="drop-area" tabindex="0" role="button" aria-label="画像ファイルをドラッグ＆ドロップするか、クリックしてファイルを選択">
+        <i class="fas fa-image"></i>
+        <p class="drop-text">画像ファイルをドラッグ＆ドロップ<br>または<span class="highlight">クリックして選択</span></p>
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg" aria-label="画像ファイルをアップロード" class="hidden">
+      </div>
+      <p class="format-info">対応形式: PNG、JPEG</p>
+    </section>
+
+    <section id="previewSection" class="preview-section hidden">
+      <h2>プレビュー</h2>
+      <div class="preview-container">
+        <img id="previewImage" alt="選択された画像のプレビュー">
+        <div class="file-info">
+          <p><strong>ファイル名:</strong> <span id="fileName"></span></p>
+          <p><strong>形式:</strong> <span id="fileType"></span></p>
+          <p><strong>サイズ:</strong> <span id="fileSize"></span></p>
+        </div>
+      </div>
+      <button id="processButton" class="primary-button">
+        <i class="fas fa-eraser"></i> メタデータを削除してダウンロード
+      </button>
+    </section>
+
+    <section class="help-section">
+      <details>
+        <summary>使い方ガイド</summary>
+        <div class="help-content">
+          <h3>このツールについて</h3>
+          <p>PNG・JPEG画像から位置情報、撮影日時、カメラ情報などのメタデータ（EXIF、XMP、IPTC、ICCプロファイル等）を完全に削除します。画像の品質は維持したまま、プライバシー情報を保護できます。</p>
+          
+          <h3>使い方</h3>
+          <ol>
+            <li>PNG または JPEG 形式の画像ファイルをアップロードします</li>
+            <li>プレビューとファイル情報を確認します</li>
+            <li>「メタデータを削除してダウンロード」ボタンをクリックします</li>
+            <li>メタデータが削除された画像ファイルが自動的にダウンロードされます</li>
+          </ol>
+
+          <h3>削除されるメタデータ</h3>
+          <ul>
+            <li><strong>EXIF情報:</strong> カメラ設定、撮影日時、GPS位置情報など</li>
+            <li><strong>XMP情報:</strong> 著作権、キーワード、編集履歴など</li>
+            <li><strong>IPTC情報:</strong> 作者、説明文、キャプションなど</li>
+            <li><strong>ICCプロファイル:</strong> カラープロファイル情報</li>
+            <li><strong>サムネイル画像:</strong> 埋め込まれたプレビュー画像</li>
+          </ul>
+
+          <h3>処理方法</h3>
+          <p><strong>PNG:</strong> 必須チャンク（IHDR、PLTE、IDAT、IEND）のみを保持し、その他のチャンクを削除します。</p>
+          <p><strong>JPEG:</strong> 画像データセグメント（SOF、SOS、DQT、DHT等）のみを保持し、メタデータセグメント（APP0-APP15、COM）を削除します。</p>
+
+          <h3>注意事項</h3>
+          <ul>
+            <li><strong>完全プライバシー保護:</strong> すべての処理はブラウザ上で実行され、ファイルはサーバーにアップロードされません</li>
+            <li>画像データはあなたのデバイスから外部に送信されません</li>
+            <li>画像の見た目や品質は変わりません（画像データは保持されます）</li>
+            <li>ICCプロファイルも削除されるため、色の見え方が僅かに変わる可能性があります</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 画像メタデータ削除ツール</p>
+  </footer>
+
+  <script type="module">
+    import { processImage } from './client-processor.js';
+    import { initDarkMode } from '../components/dark-mode.js';
+
+    // DOM要素
+    const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewSection = document.getElementById('previewSection');
+    const previewImage = document.getElementById('previewImage');
+    const fileName = document.getElementById('fileName');
+    const fileType = document.getElementById('fileType');
+    const fileSize = document.getElementById('fileSize');
+    const processButton = document.getElementById('processButton');
+    const message = document.getElementById('message');
+
+    let selectedFile = null;
+
+    // ファイルサイズをフォーマット
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // メッセージ表示
+    function showMessage(text, type = 'success') {
+      message.textContent = text;
+      message.className = type;
+      message.style.display = 'block';
+      message.setAttribute('role', 'alert');
+      setTimeout(() => {
+        message.style.display = 'none';
+        message.removeAttribute('role');
+      }, 5000);
+    }
+
+    // ドラッグ＆ドロップ処理
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropArea.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+
+    dropArea.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    dropArea.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    // ファイル処理
+    function handleFile(file) {
+      // ファイルタイプチェック
+      if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) {
+        showMessage('画像ファイルを選択してください（PNG または JPEG）', 'error');
+        return;
+      }
+
+      selectedFile = file;
+      
+      // プレビュー表示
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        fileName.textContent = file.name;
+        fileType.textContent = file.type === 'image/png' ? 'PNG' : 'JPEG';
+        fileSize.textContent = formatFileSize(file.size);
+
+        previewSection.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // メタデータ削除＆ダウンロード処理
+    processButton.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      processButton.disabled = true;
+      processButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 処理中...';
+
+      try {
+        // クライアントサイドで処理
+        const result = await processImage(selectedFile);
+        const processedBlob = result.blob;
+
+        // 即座にダウンロード
+        const url = URL.createObjectURL(processedBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cleaned_${selectedFile.name}`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showMessage('メタデータを削除してダウンロードしました！');
+
+      } catch (error) {
+        console.error('処理エラー:', error);
+        showMessage(`エラー: ${error.message}`, 'error');
+      } finally {
+        processButton.disabled = false;
+        processButton.innerHTML = '<i class="fas fa-eraser"></i> メタデータを削除してダウンロード';
+      }
+    });
+
+    // ダークモード初期化
+    initDarkMode('toggleDarkMode');
+  </script>
+</body>
+</html>

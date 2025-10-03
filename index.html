@@ -3,65 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTubeチャプター変換ツール</title>
-  <meta name="description" content="PremierePro・DaVinci Resolveのマーカーをユーチューブチャプター形式に変換するツール">
+  <title>leciel ToolKit</title>
+  <meta name="description" content="動画編集や画像処理に役立つウェブツール集">
   <link rel="stylesheet" href="common.css">
   <link rel="stylesheet" href="home.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    // FOUC（Flash of Unstyled Content）防止：ページ読み込み前にダークモード適用
+    (function() {
+      const darkModeEnabled = localStorage.getItem('darkMode') === 'enabled';
+      const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const noPreference = !localStorage.getItem('darkMode');
+
+      if (darkModeEnabled || (systemPrefersDark && noPreference)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 <body>
-  <h1>YouTubeチャプター変換ツール</h1>
+  <h1>leciel ToolKit</h1>
 
-  <a href="/app/" class="start-button"><i class="fas fa-play"></i> ツールを使う</a>
-  
   <div class="header-controls">
     <button id="toggleDarkMode" class="toggle-dark" aria-label="ダークモード切替" title="ダークモード切替">
       <i class="fas fa-moon"></i>
     </button>
   </div>
 
-  <section class="how-to">
-    <h2>使い方</h2>
-    <ul class="how-to-list">
-      <li>EDLファイルをアップロードするか、マーカーテキストをコピペします</li>
-      <li>ファイルを読み込むと、DaVinci用かPremiere用かを自動で判別します</li>
-      <li>変換されたYouTubeチャプター形式のテキストを自由に編集できます</li>
-      <li>編集が終わったら、ダウンロードするかクリップボードにコピーしてYouTube説明欄に貼り付けます</li>
-    </ul>
+  <section class="tools-section">
+    <h2>利用可能なツール</h2>
+    <div class="tools-grid">
+      <a href="/app/" class="tool-card">
+        <div class="tool-icon">
+          <i class="fas fa-video"></i>
+        </div>
+        <h3>YouTubeチャプター変換ツール</h3>
+        <p>PremierePro・DaVinci Resolveのマーカーをユーチューブチャプター形式に変換</p>
+        <span class="tool-link">使ってみる <i class="fas fa-arrow-right"></i></span>
+      </a>
 
-    <h2>対応ファイル形式</h2>
-    <div class="how-to-export">
-      <h3>DaVinci Resolve</h3>
-      <ul>
-        <li>タイムラインを右クリックして、「タイムライン」＞「書き出し」＞「タイムラインマーカーからEDL」を選択</li>
-        <li>適切な保存先を選んでEDLファイルを保存</li>
-      </ul>
-
-      <h3>Premiere Pro</h3>
-      <ul>
-        <li>EDL形式: 「ファイル」→「書き出し」→「EDL」を選び、「クリップマーカーを含める」を選択</li>
-        <li>マーカーテキスト: 「ファイル」→「書き出し」→「マーカー」を選択し、テキストファイル(*.txt)形式で保存</li>
-        <li>マーカーCSV: 「ファイル」→「書き出し」→「マーカー」を選択し、カンマ区切り値(*.csv)形式で保存</li>
-      </ul>
+      <a href="/metadata-remover/" class="tool-card">
+        <div class="tool-icon">
+          <i class="fas fa-image"></i>
+        </div>
+        <h3>画像メタデータ削除ツール</h3>
+        <p>PNG・JPEG画像からEXIF、位置情報などのメタデータを完全に削除</p>
+        <span class="tool-link">使ってみる <i class="fas fa-arrow-right"></i></span>
+      </a>
     </div>
   </section>
 
+  <section class="how-to">
+    <h2>このサイトについて</h2>
+    <ul class="how-to-list">
+      <li>動画編集や画像処理に役立つウェブツールを提供しています</li>
+      <li>すべてのツールはブラウザ上で動作し、インストール不要です</li>
+      <li>アップロードしたファイルはサーバーに保存されず、プライバシーが保護されます</li>
+      <li>各ツールは完全無料で利用できます</li>
+    </ul>
+  </section>
+
   <footer>
-    <p>&copy; 2025 YouTubeチャプター変換ツール</p>
+    <p>&copy; 2025 leciel ToolKit</p>
   </footer>
 
-  <script>
-    const toggleButton = document.getElementById('toggleDarkMode');
-    toggleButton.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      toggleButton.innerHTML = document.body.classList.contains('dark') ? 
-        '<i class="fas fa-sun"></i>' : 
-        '<i class="fas fa-moon"></i>';
+  <script type="module">
+    import { initDarkMode } from './components/dark-mode.js';
+
+    // ダークモードを初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      initDarkMode('toggleDarkMode');
     });
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.body.classList.add('dark');
-      toggleButton.innerHTML = '<i class="fas fa-sun"></i>';
-    }
   </script>
 </body>
 </html>

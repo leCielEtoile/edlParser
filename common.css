@@ -39,6 +39,7 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --spacing-xxl: 48px;
   
   /* トランジション */
   --transition-normal: 0.3s ease;
